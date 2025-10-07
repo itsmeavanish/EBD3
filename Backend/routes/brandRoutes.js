@@ -3,6 +3,71 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const { Order } = require("../models/Order");
 
+router.post("/access", async (req, res) => {
+  try {
+    const { brandName, accessKey } = req.body;
+
+    if (!brandName || !accessKey) {
+      return res.status(400).json({
+        success: false,
+        message: "Brand name and access key are required"
+      });
+    }
+
+    const expectedKey = `${brandName.toLowerCase().replace(/\s+/g, '')}_2024`;
+
+    if (accessKey !== expectedKey) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
+    const orders = await Order.find({ brandName: brandName }).sort({ submittedAt: -1 });
+
+    if (orders.length === 0) {
+      return res.json({
+        success: true,
+        brandName: brandName,
+        stats: {
+          totalOrders: 0,
+          totalRevenue: 0,
+          allOrders: 0,
+          pendingOrders: 0,
+          allotedOrders: 0,
+          confirmedOrders: 0
+        },
+        orders: []
+      });
+    }
+
+    const placedOrders = orders.filter(order => order.isPlaced === true);
+    const totalRevenue = placedOrders.reduce((sum, order) => sum + (order.price || 0), 0);
+    const totalOrders = placedOrders.length;
+    const allotedOrders = orders.filter(o => o.isAlloted).length;
+    const confirmedOrders = orders.filter(o => o.isConfirmed).length;
+
+    const stats = {
+      totalOrders: totalOrders,
+      totalRevenue: totalRevenue,
+      allOrders: orders.length,
+      pendingOrders: orders.filter(o => !o.isPlaced).length,
+      allotedOrders: allotedOrders,
+      confirmedOrders: confirmedOrders
+    };
+
+    res.json({
+      success: true,
+      brandName: brandName,
+      stats: stats,
+      orders: orders
+    });
+  } catch (err) {
+    console.error("Error in brand access:", err);
+    res.status(500).json({ success: false, message: "Error accessing brand data" });
+  }
+});
+
 router.get("/dashboard/:brandName", authMiddleware, async (req, res) => {
   try {
     const { brandName } = req.params;

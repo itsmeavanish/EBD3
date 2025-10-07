@@ -9,6 +9,7 @@ import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import EnhancedAdminDashboard from './pages/EnhancedAdminDashboard';
 import BrandPortal from './pages/BrandPortal';
+import BrandAccess from './pages/BrandAccess';
 import RefundForms from './pages/RefundForms';
 import AllotOrders from './pages/AllotOrders';
 import OrderForm from './components/forms/OrderForm';
@@ -105,6 +106,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="brand-access" element={<BrandAccess />} />
       </Route>
     </Routes>
   );
